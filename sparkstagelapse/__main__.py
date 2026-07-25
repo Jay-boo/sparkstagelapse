@@ -1,7 +1,7 @@
 from databricks_toolbox.environment.environment_detector import EnvironmentDetector
 from databricks_toolbox.core.logger import logger
 import pyspark.sql.functions as F
-from spark_prettyprint.display import display
+from sparkstagelapse.display import display
 from pyspark.sql import Row
 from datetime import datetime
 

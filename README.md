@@ -1,83 +1,104 @@
 # sparkstagelapse
 
-Affichage interactif de DataFrames (Spark ou pandas), que vous soyez dans un
-notebook, un script, ou un run Databricks — avec un dashboard web local qui
-**reste ouvert et à jour même après la fin du script qui l'a lancé.**
+Interactive DataFrame display (Spark or pandas) — whether you're in a
+notebook, a script, or a Databricks run — backed by a local web dashboard
+that **stays open and up to date even after the script that launched it has
+exited.**
 
 ## Installation
 
-Depuis la racine de ce dossier :
+From the root of this folder:
 
 ```bash
 pip install -e .
-# ou, si vous voulez l'explorateur plein écran (Textual) :
+# or, if you also want the full-screen explorer (Textual):
 pip install -e ".[tui]"
 ```
 
-## Usage rapide
+## Quick usage
 
 ```python
-from spark_prettyprint import display_spark
+from sparkstagelapse import display_spark
 
 # df = spark.sql("select * from ...")
-display(df, title="Employees")        # mode "auto" : notebook -> riche, script -> dashboard web
-display(df, title="Employees", mode="web")   # force le dashboard web
-display(df, title="Employees", mode="tui")   # explorateur plein écran (bloquant)
-display(df, title="Employees", mode="rich")  # impression ASCII terminal
+display_spark(df, title="Employees")             # "auto" mode: notebook -> rich object, script -> web dashboard
+display_spark(df, title="Employees", mode="web")  # force the web dashboard
+display_spark(df, title="Employees", mode="tui")  # full-screen explorer (blocking)
+display_spark(df, title="Employees", mode="rich") # plain ASCII output in the terminal
 ```
 
-Ou directement sur un pandas DataFrame :
+Or directly on a pandas DataFrame:
 
 ```python
-from spark_prettyprint import SparkDisplay
+from sparkstagelapse import SparkDisplay
 
-SparkDisplay(pdf, title="Aperçu").show_web()
+SparkDisplay(pdf, title="Preview").show_web()
 ```
 
-## Le dashboard persistant
+## The persistent dashboard
 
-Au premier `show_web()` (ou `mode="web"`), le client :
+On the first `show_web()` call (or `mode="web"`), the client:
 
-1. Vérifie si un serveur répond déjà sur `127.0.0.1:8765` (`/health`).
-2. Si oui : pousse simplement la nouvelle table dessus en HTTP, aucun
-   nouveau process n'est créé.
-3. Si non : **spawn le serveur dans un process détaché** (pas un thread —
-   un thread daemon meurt avec son process parent, un process séparé non).
-   Le script continue de tourner normalement, sans bloquer.
+1. Checks whether a server already responds on `127.0.0.1:8765` (`/health`).
+2. If yes: just pushes the new table to it over HTTP — no new process is
+   created.
+3. If no: **spawns the server as a detached process** (not a thread — a
+   daemon thread dies with its parent process, a separate process doesn't).
+   Your script keeps running normally, without blocking.
 
-Le serveur reste donc actif après la fin du script. Le prochain run — même
-demain, même depuis un autre script — retrouvera le même dashboard déjà
-ouvert dans votre navigateur et le mettra à jour en websocket.
+The server therefore stays alive after your script exits. The next run —
+even tomorrow, even from a different script — will find the same dashboard
+already open in your browser and update it live over WebSocket.
 
-### Gérer le serveur manuellement
+### Managing the server manually
 
 ```bash
-python -m spark_prettyprint.dashboard status
-python -m spark_prettyprint.dashboard stop
-python -m spark_prettyprint.dashboard start   # démarrage manuel, bloquant, premier plan
+python -m sparkstagelapse.dashboard status
+python -m sparkstagelapse.dashboard stop
+python -m sparkstagelapse.dashboard start   # manual foreground start (blocking)
 ```
 
-Logs et pidfile : `~/.cache/spark-prettyprint/dashboard_<port>.log` / `.pid`.
+Logs and pid files live in `~/.cache/sparkstagelapse/dashboard_<port>.log` / `.pid`.
 
-### Changer le port / host
+### Changing the port / host
 
 ```python
-from spark_prettyprint import DashboardClient, SparkDisplay
+from sparkstagelapse import DashboardClient, SparkDisplay
 
 client = DashboardClient(host="127.0.0.1", port=9000)
-SparkDisplay(pdf, title="Aperçu", _dashboard=client).show_web()
+SparkDisplay(pdf, title="Preview", _dashboard=client).show_web()
 ```
 
-## Structure du package
+## Package structure
 
 ```
-src/spark_prettyprint/
-├── __init__.py            # API publique : SparkDisplay, display_spark, DashboardClient
-├── display.py              # SparkDisplay / display_spark — rendu selon le contexte
+sparkstagelapse/
+├── __init__.py             # Public API: SparkDisplay, display_spark, DashboardClient
+├── display.py               # SparkDisplay / display_spark — renders depending on context
 └── dashboard/
-    ├── app.py               # app FastAPI (routes HTTP + WebSocket), state en mémoire
-    ├── server.py            # bootstrap serveur (foreground), pid/log files
-    ├── client.py             # DashboardClient : health-check, spawn détaché, push HTTP
-    ├── templates.py          # template HTML/JS + rendu table -> HTML
-    └── __main__.py            # CLI : start / stop / status
+    ├── app.py                # FastAPI app (HTTP + WebSocket routes), in-memory state
+    ├── server.py              # Server bootstrap (foreground), pid/log files
+    ├── client.py               # DashboardClient: health-check, detached spawn, HTTP push
+    ├── templates.py            # HTML/JS template + table -> HTML rendering
+    └── __main__.py              # CLI: start / stop / status
 ```
+
+## Development
+
+```bash
+pip install -e ".[dev,tui]"
+
+ruff check .          # lint
+pytest -v             # unit + integration tests
+python -m build        # build sdist + wheel
+twine check dist/*     # validate package metadata before upload
+```
+
+## CI/CD
+
+See `.github/workflows/ci.yml` (lint + test matrix + build, on every push/PR)
+and `.github/workflows/release.yml` (build + publish to PyPI/TestPyPI via
+Trusted Publishing, on tagged GitHub Releases). Before the release workflow
+can actually publish, you need to register this repo as a Trusted Publisher
+on PyPI/TestPyPI — see the CI/CD explanation in this conversation for the
+exact steps.

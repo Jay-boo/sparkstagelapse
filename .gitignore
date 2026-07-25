@@ -1,5 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,spark
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,spark
+## Databricks toolbox ##
+artifacts/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
