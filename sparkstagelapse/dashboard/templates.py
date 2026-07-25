@@ -1,17 +1,12 @@
 from __future__ import annotations
-from html import escape
+
 import html as html_lib
 
 import pandas as pd
-
-
-
 
 # dashboard/templates.py
 
-import html as html_lib
 
-import pandas as pd
 
 
 def table_to_html(pdf: pd.DataFrame, title: str, table_id: str,

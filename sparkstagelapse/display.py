@@ -14,7 +14,7 @@ from .dashboard.templates import table_to_html
 
 def _is_notebook() -> bool:
     try:
-        shell = get_ipython().__class__.__name__  # type: ignore[name-defined]
+        shell = get_ipython().__class__.__name__  # type: ignore[name-defined] # noqa: F821
         return shell == "ZMQInteractiveShell"
     except Exception:
         return False
@@ -150,7 +150,7 @@ class SparkDisplay:
 
         if mode == "notebook":
             try:
-                from IPython.display import display, HTML
+                from IPython.display import HTML, display
                 return display(HTML(self._repr_html_()))
             except Exception:
                 return self.show_rich(max_width=max_width, log=log)

@@ -1,9 +1,10 @@
-from databricks_toolbox.environment.environment_detector import EnvironmentDetector
-from databricks_toolbox.core.logger import logger
-import pyspark.sql.functions as F
-from sparkstagelapse.display import display
-from pyspark.sql import Row
 from datetime import datetime
+
+import pyspark.sql.functions as F
+from databricks_toolbox.core.logger import logger
+from databricks_toolbox.environment.environment_detector import EnvironmentDetector
+
+from sparkstagelapse.display import display
 
 data = [
     {
