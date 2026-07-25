@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spark-prettyprint"
+version = "0.1.0"
+description = "Affichage interactif de DataFrames (Spark/pandas) en notebook ou en script, via un dashboard web local persistant."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=1.5",
+    "fastapi>=0.100",
+    "uvicorn[standard]>=0.23",
+    "requests>=2.28",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+tui = ["textual>=0.40"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spark_prettyprint"]
