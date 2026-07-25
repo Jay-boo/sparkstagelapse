@@ -1,4 +1,4 @@
-# spark-prettyprint
+# sparkstagelapse
 
 Affichage interactif de DataFrames (Spark ou pandas), que vous soyez dans un
 notebook, un script, ou un run Databricks — avec un dashboard web local qui
