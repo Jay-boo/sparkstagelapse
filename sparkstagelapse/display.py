@@ -14,7 +14,7 @@ from .dashboard.templates import table_to_html
 
 def _is_notebook() -> bool:
     try:
-        shell = get_ipython().__class__.__name__  # type: ignore[name-defined] # noqa: F821
+        shell = get_ipython().__class__.__name__  # noqa: F821  # type: ignore[name-defined]
         return shell == "ZMQInteractiveShell"
     except Exception:
         return False
@@ -168,18 +168,22 @@ def display(df, n: int = 200, title: str = "Spark DataFrame",
                    console: Optional[Console] = None, mode: str = "auto"):
     """
     mode:
-      - "auto"     : notebook -> objet riche IPython, script -> dashboard web
-      - "notebook" : retourne l'objet, IPython appellera _repr_html_
-      - "web"      : dashboard web local persistant, non bloquant (recommandé en script)
-      - "tui"      : explorateur plein écran Textual, bloquant
-      - "rich"     : impression ASCII simple dans le terminal
+      - "auto"     : notebook -> displays immediately (like Databricks' display()),
+                     script -> web dashboard
+      - "notebook" : returns the object WITHOUT displaying it — only shows up if
+                     it ends up being the last expression evaluated in the cell.
+                     Use "auto" (or call obj.show()) if you want it to render
+                     immediately regardless of what code follows.
+      - "web"      : persistent local web dashboard, non-blocking (recommended in scripts)
+      - "tui"      : full-screen Textual explorer, blocking
+      - "rich"     : plain ASCII output in the terminal
     """
     pdf = df.limit(n).toPandas()
     obj = SparkDisplay(pdf=pdf, title=title, console=console)
 
     if mode == "auto":
         if _is_notebook():
-            return obj
+            return obj.show(force="notebook")
         return obj.show(force="web")
 
     if mode == "notebook":
