@@ -1,12 +1,9 @@
+# dashboard/templates.py
 from __future__ import annotations
 
 import html as html_lib
 
 import pandas as pd
-
-# dashboard/templates.py
-
-
 
 
 def table_to_html(pdf: pd.DataFrame, title: str, table_id: str,
@@ -456,46 +453,202 @@ PAGE_TEMPLATE = """
 <meta charset="utf-8">
 <title>Spark Dashboard</title>
 <style>
-  body { font-family: Inter, "Segoe UI", Arial, sans-serif; background:#0B0F14; color:#E5E7EB; margin:0; padding:20px; }
-  h1 { font-size:16px; color:#9CA3AF; font-weight:600; margin-bottom:16px; }
-  .spark-card { background:#111827; border:1px solid #1F2937; border-radius:14px; padding:14px; margin-bottom:16px; }
-  .spark-meta { font-size:12px; color:#9CA3AF; margin-bottom:8px; }
-  .spark-search { margin-bottom:10px; padding:8px 10px; width:260px; border:1px solid #374151; border-radius:10px; background:#0B0F14; color:#E5E7EB; }
-  .spark-scroll { overflow:auto; max-height:420px; border:1px solid #1F2937; border-radius:10px; }
-  table.sparkdf { border-collapse: separate; border-spacing:0; width:100%; font-size:13px; }
-  table.sparkdf th { position:sticky; top:0; background:#0F172A; text-align:left; padding:9px 11px; border-bottom:1px solid #1F2937; }
-  table.sparkdf td { padding:8px 11px; border-bottom:1px solid #1F2937; white-space:nowrap; max-width:240px; overflow:hidden; text-overflow:ellipsis; }
-  table.sparkdf tr:hover td { background:#1F2937; }
-  #status { font-size:11px; color:#4ADE80; margin-bottom:14px; }
+  :root {
+    --bg: #ffffff; --bg-alt: #f7f7f8; --border: #ddd; --text: #1a1a1a;
+    --text-muted: #6b6b6b; --hover: #f0f3f8; --accent: #3b82f6;
+    --ok: #16a34a; --warn: #d97706;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --bg-alt: #1a1d23; --border: #2a2e37; --text: #e5e7eb;
+      --text-muted: #8b93a1; --hover: #20242c; --accent: #5b9dff;
+      --ok: #4ade80; --warn: #fbbf24;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+    background: var(--bg); color: var(--text); margin: 0; padding: 0;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--bg-alt);
+    border-bottom: 1px solid var(--border); padding: 14px 24px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 15px; font-weight: 700; margin: 0; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  header .subtitle {
+    font-size: 11.5px; color: var(--text-muted); margin: 0;
+  }
+  .header-spacer { flex: 1; }
+  #status {
+    font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;
+  }
+  #status .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--warn);
+    display: inline-block; transition: background 0.2s;
+  }
+  #status.connected .dot { background: var(--ok); }
+  #table-count {
+    font-size: 11.5px; color: var(--text-muted); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px; padding: 3px 10px;
+  }
+  #clear-btn {
+    font-size: 11.5px; padding: 5px 11px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--bg); color: var(--text); cursor: pointer;
+  }
+  #clear-btn:hover { background: var(--hover); }
+  main { padding: 20px 24px 60px; max-width: 1400px; margin: 0 auto; }
+  #empty-state {
+    text-align: center; color: var(--text-muted); font-size: 13px;
+    padding: 80px 20px; border: 1px dashed var(--border); border-radius: 12px; margin-top: 20px;
+  }
+  .table-card {
+    background: var(--bg-alt); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 18px; animation: fadeIn 0.35s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .table-card .card-meta {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .table-card .latest-pill {
+    background: var(--accent); color: #fff; border-radius: 8px;
+    padding: 1px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+  }
+  .table-card .card-time { cursor: default; }
 </style>
 </head>
 <body>
-  <h1>Spark Dashboard</h1>
-  <div id="status">● connexion...</div>
-  <div id="container"></div>
+  <header>
+    <h1>⚡ Spark Dashboard</h1>
+    <span class="subtitle">le plus récent en haut, le plus ancien en bas</span>
+    <div class="header-spacer"></div>
+    <span id="table-count">0 table(s)</span>
+    <button id="clear-btn" title="Vide uniquement la vue locale — les tables restent en mémoire côté serveur, reconnectez-vous (F5) pour les revoir">Effacer la vue</button>
+    <span id="status"><span class="dot"></span><span id="status-text">connexion…</span></span>
+  </header>
+  <main>
+    <div id="empty-state">En attente de la première table… lancez <code>display(df)</code> depuis votre script.</div>
+    <div id="container"></div>
+  </main>
+
 <script>
-function sparkFilter(tableId, query) {
-  const q = query.toLowerCase();
-  document.querySelectorAll("#" + tableId + " tbody tr").forEach(tr => {
-    tr.style.display = tr.innerText.toLowerCase().includes(q) ? "" : "none";
-  });
+const container = document.getElementById("container");
+const statusEl = document.getElementById("status");
+const statusText = document.getElementById("status-text");
+const emptyState = document.getElementById("empty-state");
+const countEl = document.getElementById("table-count");
+const clearBtn = document.getElementById("clear-btn");
+
+let tableCount = 0;
+
+function updateCount() {
+  countEl.textContent = tableCount + (tableCount === 1 ? " table" : " tables");
 }
 
-const container = document.getElementById("container");
-const status = document.getElementById("status");
+function relativeTime(ts) {
+  if (!ts) return "";
+  const diffSec = Math.max(0, Math.floor((Date.now() / 1000) - ts));
+  if (diffSec < 5) return "à l'instant";
+  if (diffSec < 60) return diffSec + "s";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return diffMin + " min";
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return diffH + " h";
+  return Math.floor(diffH / 24) + " j";
+}
+
+function refreshRelativeTimes() {
+  document.querySelectorAll(".card-time").forEach(el => {
+    const ts = parseFloat(el.dataset.ts || "0");
+    el.textContent = ts ? "il y a " + relativeTime(ts) : "";
+  });
+}
+setInterval(refreshRelativeTimes, 15000);
+
+function clearLatestPills() {
+  document.querySelectorAll(".latest-pill").forEach(el => el.remove());
+}
+
+function addTable(payload) {
+  if (document.getElementById("card_" + payload.id)) return;
+  emptyState.style.display = "none";
+
+  const card = document.createElement("div");
+  card.className = "table-card";
+  card.id = "card_" + payload.id;
+
+  const meta = document.createElement("div");
+  meta.className = "card-meta";
+  const pill = document.createElement("span");
+  pill.className = "latest-pill";
+  pill.textContent = "PLUS RÉCENT";
+  const time = document.createElement("span");
+  time.className = "card-time";
+  time.dataset.ts = payload.ts || "";
+  time.title = payload.ts ? new Date(payload.ts * 1000).toLocaleString() : "";
+  meta.appendChild(pill);
+  meta.appendChild(time);
+  card.appendChild(meta);
+
+  // payload.html contains a <div class="spark-wrap">...</div> followed by a
+  // sibling <script> that wires up sort/filter/pin/context-menu for that
+  // specific table. Parsing it via innerHTML keeps both nodes, but a
+  // <script> created that way is inert by spec -- it never auto-executes.
+  // So we walk the parsed nodes, move the real content into the card, and
+  // re-create any <script> as a fresh element so the browser actually runs it.
+  const temp = document.createElement("div");
+  temp.innerHTML = payload.html;
+  const inlineScripts = [];
+  Array.from(temp.childNodes).forEach(node => {
+    if (node.nodeType === 1 && node.tagName === "SCRIPT") {
+      inlineScripts.push(node.textContent);
+    } else {
+      card.appendChild(node);
+    }
+  });
+
+  clearLatestPills();
+  container.prepend(card);
+  refreshRelativeTimes();
+
+  inlineScripts.forEach(code => {
+    const s = document.createElement("script");
+    s.textContent = code;
+    document.body.appendChild(s);
+    document.body.removeChild(s); // executed synchronously on append, safe to detach
+  });
+
+  tableCount++;
+  updateCount();
+}
+
+clearBtn.addEventListener("click", () => {
+  container.innerHTML = "";
+  tableCount = 0;
+  updateCount();
+  emptyState.style.display = "block";
+});
 
 function connect() {
   const ws = new WebSocket("ws://" + location.host + "/ws");
-  ws.onopen = () => status.textContent = "● connecté";
-  ws.onclose = () => { status.textContent = "○ déconnecté, reconnexion..."; setTimeout(connect, 1000); };
-  ws.onerror = () => ws.close();
-  ws.onmessage = (event) => {
-    const payload = JSON.parse(event.data);
-    if (document.getElementById("card_" + payload.id)) return; // déjà affichée
-    const div = document.createElement("div");
-    div.innerHTML = payload.html;
-    container.prepend(div.firstElementChild);
+  ws.onopen = () => {
+    statusEl.classList.add("connected");
+    statusText.textContent = "connecté";
   };
+  ws.onclose = () => {
+    statusEl.classList.remove("connected");
+    statusText.textContent = "déconnecté, reconnexion…";
+    setTimeout(connect, 1000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (event) => addTable(JSON.parse(event.data));
 }
 connect();
 </script>
