@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from typing import Optional
+from pyspark.sql.dataframe import DataFrame
 
 import pandas as pd
 from rich.console import Console
@@ -156,6 +157,7 @@ class SparkDisplay:
                 return self.show_rich(max_width=max_width, log=log)
 
         if mode == "web":
+            
             return self.show_web()
 
         if mode == "tui":
@@ -164,8 +166,8 @@ class SparkDisplay:
         return self.show_rich(max_width=max_width, log=log)
 
 
-def display(df, n: int = 200, title: str = "Spark DataFrame",
-                   console: Optional[Console] = None, mode: str = "auto"):
+def display(df:DataFrame, n: int = 200, title: str = "Spark DataFrame",
+                   console: Optional[Console] = None, mode: str = "auto",truncate:bool|None=True):
     """
     mode:
       - "auto"     : notebook -> displays immediately (like Databricks' display()),
@@ -179,6 +181,8 @@ def display(df, n: int = 200, title: str = "Spark DataFrame",
       - "rich"     : plain ASCII output in the terminal
     """
     pdf = df.limit(n).toPandas()
+    if hasattr(df, "show"):
+        df.show(n, truncate=truncate) 
     obj = SparkDisplay(pdf=pdf, title=title, console=console)
 
     if mode == "auto":
