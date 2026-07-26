@@ -6,6 +6,7 @@ import sys
 import time
 import uuid
 import webbrowser
+from datetime import datetime, timezone
 
 import pandas as pd
 import requests
@@ -91,7 +92,7 @@ class DashboardClient:
 
         subprocess.Popen(
             [
-                sys.executable, "-m", "spark_prettyprint.dashboard.server",
+                sys.executable, "-m", "sparkstagelapse.dashboard.server",
                 "--host", self.host, "--port", str(self.port),
             ],
             **popen_kwargs,
@@ -127,6 +128,7 @@ class DashboardClient:
             "id": table_id,
             "title": title,
             "html": table_to_html(pdf, title, table_id),
+            "ts": datetime.now(timezone.utc).timestamp(),
         }
         try:
             requests.post(f"{self.base_url}/api/tables", json=payload, timeout=2)

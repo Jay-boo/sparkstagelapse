@@ -30,7 +30,7 @@ def run(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
     """Démarre le serveur EN PREMIER PLAN (bloquant) dans le process courant.
 
     Prévu pour être lancé comme entrypoint d'un process séparé — soit
-    manuellement (`python -m spark_prettyprint.dashboard.server`), soit
+    manuellement (`python -m sparkstagelapse.dashboard.server`), soit
     spawné en détaché par DashboardClient (voir client.py). Ce n'est
     volontairement PAS un thread : un thread daemon meurt avec son process
     parent, un process séparé survit à la fin du script appelant.

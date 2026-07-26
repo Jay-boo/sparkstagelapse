@@ -36,7 +36,7 @@ def _stop(port: int) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="python -m spark_prettyprint.dashboard")
+    parser = argparse.ArgumentParser(prog="python -m sparkstagelapse.dashboard")
     parser.add_argument("action", choices=["start", "stop", "status"])
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
