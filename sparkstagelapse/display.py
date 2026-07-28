@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from typing import Optional
-from pyspark.sql.dataframe import DataFrame
 
 import pandas as pd
+from pyspark.sql.dataframe import DataFrame
 from rich.console import Console
 from rich.table import Table
 
