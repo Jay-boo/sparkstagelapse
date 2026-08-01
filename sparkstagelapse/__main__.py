@@ -1,10 +1,10 @@
 from datetime import datetime
 
 import pyspark.sql.functions as F
-from databricks_toolbox.core.logger import logger
-from databricks_toolbox.environment.environment_detector import EnvironmentDetector
-
+from pyspark.sql import SparkSession
 from sparkstagelapse.display import display
+import logging
+logger=logging.getLogger(__name__)
 
 data = [
     {
@@ -67,10 +67,10 @@ data = [
 
 if __name__=="__main__":
     logger.info('Running basic spark command')
-    spark=EnvironmentDetector.get_spark()
+    spark = SparkSession.builder.appName("sparkstagelapse-demo").getOrCreate()
     df = spark.createDataFrame(data)
-    display(df,title="Raw data")
-    display(df.select(F.col("tags")),title="After Selection")
+    display(df,title="Raw data",mode="web")
+    # display(df.select(F.col("tags")),title="After Selection")
     logger.info('DONE')
 
 

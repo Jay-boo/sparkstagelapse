@@ -1,0 +1,89 @@
+.spark-table {
+  --bg: #ffffff; --bg-alt: #f7f7f8; --border: #ddd; --text: #1a1a1a;
+  --text-muted: #6b6b6b; --hover: #f0f3f8; --accent: #3b82f6; --input-bg: #ffffff;
+  --chip-bg: #e8edf7; --chip-text: #1f3a63; --menu-bg: #ffffff; --menu-hover: #f0f3f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px; color: var(--text); margin: 8px 0;
+}
+@media (prefers-color-scheme: dark) {
+  .spark-table {
+    --bg: #1e1e1e; --bg-alt: #252526; --border: #3c3c3c; --text: #e0e0e0;
+    --text-muted: #9a9a9a; --hover: #2a2d3a; --accent: #5b9dff; --input-bg: #2d2d2d;
+    --chip-bg: #2d3a52; --chip-text: #cfe0ff; --menu-bg: #2d2d2d; --menu-hover: #3a3a3c;
+  }
+}
+.spark-table .spark-toolbar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;
+}
+.spark-table .spark-title { font-weight: 600; font-size: 14px; color: var(--text); }
+.spark-table .spark-count { color: var(--text-muted); font-size: 12px; }
+.spark-table input.global-search {
+  flex: 1; min-width: 180px; padding: 5px 8px; border: 1px solid var(--border);
+  border-radius: 5px; font-size: 12px; background: var(--input-bg); color: var(--text);
+}
+.spark-table button.clear-btn {
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg-alt); color: var(--text); cursor: pointer; font-size: 12px;
+}
+.spark-table button.clear-btn:hover { background: var(--hover); }
+.spark-table .chip-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.spark-table .chip {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--chip-bg);
+  color: var(--chip-text); border-radius: 12px; padding: 3px 8px; font-size: 11px;
+}
+.spark-table .chip .chip-x { cursor: pointer; font-weight: bold; opacity: 0.7; }
+.spark-table .chip .chip-x:hover { opacity: 1; }
+.spark-table .spark-scroll {
+  max-height: 480px; overflow: auto; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); overscroll-behavior: contain;
+}
+.spark-table table {
+  border-collapse: collapse; width: 100%; white-space: nowrap; background: var(--bg);
+}
+.spark-table th, .spark-table td {
+  padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left;
+  max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+  background: var(--bg); color: var(--text);
+}
+.spark-table thead tr:first-child th {
+  position: sticky; top: 0; background: var(--bg-alt); z-index: 3;
+  user-select: none; border-bottom: 2px solid var(--border);
+}
+.spark-table thead tr:nth-child(2) th {
+  position: sticky; top: 29px; background: var(--bg); z-index: 2; padding: 4px 6px;
+}
+.spark-table .th-label { cursor: pointer; }
+.spark-table .th-label:hover { text-decoration: underline; }
+.spark-table .pin-mark { font-size: 10px; margin-left: 4px; }
+.spark-table .pin-mark.active::before { content: "📌"; }
+.spark-table .col-filter {
+  width: 100%; box-sizing: border-box; padding: 3px 5px; font-size: 11px;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text);
+}
+.spark-table tbody tr:hover td { background: var(--hover); }
+.spark-table tbody tr.row-hidden { display: none; }
+.spark-table tbody td { cursor: context-menu; }
+.spark-table .sort-arrow { font-size: 10px; margin-left: 4px; color: var(--accent); }
+.spark-table th.pinned-col, .spark-table td.pinned-col {
+  position: sticky; z-index: 1; box-shadow: 2px 0 4px rgba(0, 0, 0, 0.15);
+}
+.spark-table thead th.pinned-col { z-index: 4; }
+.spark-table .spark-ctxmenu {
+  position: fixed; z-index: 1000; background: var(--menu-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  padding: 4px; font-size: 12px; display: none; min-width: 200px;
+}
+.spark-table .spark-ctxmenu .ctx-item {
+  padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.spark-table .spark-ctxmenu .ctx-item:hover { background: var(--menu-hover); }
+.spark-table .spark-ctxmenu .ctx-label {
+  padding: 4px 10px; color: var(--text-muted); font-size: 10px; text-transform: uppercase;
+}
+
+/* Plot area, attached below the table inside the same card */
+.spark-table .spark-plot {
+  margin-top: 10px; border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px; background: var(--bg);
+}

@@ -14,7 +14,8 @@ dependencies = [
     "uvicorn[standard]>=0.23",
     "requests>=2.28",
     "rich>=13.0",
-    "pyspark"
+    "pyspark",
+    "jinja2>=3.0.0"
 ]
 
 [project.optional-dependencies]

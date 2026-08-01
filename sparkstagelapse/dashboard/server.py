@@ -13,7 +13,7 @@ DEFAULT_PORT = 8765
 
 
 def _state_dir() -> Path:
-    d = Path.home() / ".cache" / "spark-prettyprint"
+    d = Path.home() / ".cache" / "sparkstagelapse"
     d.mkdir(parents=True, exist_ok=True)
     return d
 

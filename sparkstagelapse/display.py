@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .dashboard.client import DashboardClient
-from .dashboard.templates import table_to_html
+from .dashboard.rendering import table_to_html,table_to_html_with_style 
 
 
 def _is_notebook() -> bool:
@@ -42,7 +42,7 @@ class SparkDisplay:
     def _repr_html_(self):
         import uuid
         table_id = f"tbl_{uuid.uuid4().hex[:8]}"
-        return table_to_html(self.pdf, self.title, table_id)
+        return table_to_html_with_style(self.pdf, self.title, table_id)
 
     def __str__(self):
         return self.pdf.to_string(index=False)
@@ -181,7 +181,7 @@ def display(df:DataFrame, n: int = 200, title: str = "Spark DataFrame",
       - "rich"     : plain ASCII output in the terminal
     """
     pdf = df.limit(n).toPandas()
-    if hasattr(df, "show"):
+    if hasattr(df, "show") and not _is_notebook():
         df.show(n, truncate=truncate) 
     obj = SparkDisplay(pdf=pdf, title=title, console=console)
 

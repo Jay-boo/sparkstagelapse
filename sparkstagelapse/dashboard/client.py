@@ -10,9 +10,12 @@ from datetime import datetime, timezone
 
 import pandas as pd
 import requests
+import logging
+
 
 from .server import DEFAULT_HOST, DEFAULT_PORT, log_file
-from .templates import table_to_html
+from .rendering import table_to_html,to_plot_spec
+logger=logging.getLogger(__name__)
 
 _READY_TIMEOUT_S = 5.0
 _POLL_INTERVAL_S = 0.05
@@ -111,11 +114,11 @@ class DashboardClient:
             time.sleep(_POLL_INTERVAL_S)
         return False
 
-    def push(self, pdf: pd.DataFrame, title: str) -> bool:
+    def push(self, pdf: pd.DataFrame, title: str,plot=None) -> bool:
         if not self.ensure_running():
-            print(
-                f"[spark-prettyprint] impossible de démarrer/joindre le "
-                f"dashboard sur {self.base_url} — voir {log_file(self.port)}"
+            logger.warning(
+                "impossible de démarrer/joindre le dahsboard sur %s - voir %s",
+                self.base_url,log_file(self.port)
             )
             return False
 
@@ -124,16 +127,18 @@ class DashboardClient:
             self._opened_browser = True
 
         table_id = f"tbl_{uuid.uuid4().hex[:8]}"
+
         payload = {
             "id": table_id,
             "title": title,
-            "html": table_to_html(pdf, title, table_id),
             "ts": datetime.now(timezone.utc).timestamp(),
+            "table_html": table_to_html(pdf, title, table_id),
+            "columns": [str(c) for c in pdf.columns],
+            "plot": to_plot_spec(plot),
         }
         try:
             requests.post(f"{self.base_url}/api/tables", json=payload, timeout=2)
             return True
         except Exception as exc:
-            print(f"[spark-prettyprint] dashboard indisponible, table "
-                  f"'{title}' non affichée : {exc!r}")
+            logger.warning(f"dashboard indisponible, table %r non affichée",title,exc_info=True)
             return False

@@ -1,12 +1,93 @@
-# dashboard/templates.py
 from __future__ import annotations
 
 import html as html_lib
+import json
 
 import pandas as pd
 
 
-def table_to_html(pdf: pd.DataFrame, title: str, table_id: str,
+def _esc(v) -> str:
+    if v is None or (isinstance(v, float) and pd.isna(v)):
+        return ""
+    return html_lib.escape(str(v))
+
+
+def table_to_html(pdf: pd.DataFrame, title: str, table_id: str) -> str:
+    """Renders a DataFrame as semantic table markup for the `.spark-table`
+    component (see static/js/spark-table.js + static/css/spark-table.css).
+
+    No inline <style>/<script> here on purpose — this used to be a single
+    27KB f-string mixing markup, CSS and JS with ids like `sortCol_{table_id}`
+    templated in. That doesn't scale past one widget. Now: this function
+    only emits markup + a data-col-uniques JSON blob, and a single reusable
+    SparkTable JS class (loaded once, in the page) wires up sort/filter/pin/
+    context-menu behavior per-instance, scoped by container element instead
+    of by id string.
+
+    Columns with <= 25 unique values get a <select> dropdown filter instead
+    of free text — computed here since it needs the actual data.
+    """
+    columns = [str(c) for c in pdf.columns]
+
+    col_uniques: dict[str, list[str]] = {}
+    for col in columns:
+        try:
+            uniq = pdf[col].dropna().astype(str).unique().tolist()
+        except Exception:
+            uniq = []
+        if 0 < len(uniq) <= 25:
+            col_uniques[col] = sorted(uniq, key=str.lower)
+
+    header_cells = "".join(
+        f'<th data-col="{i}">'
+        f'<span class="th-label">{_esc(col)}</span>'
+        f'<span class="pin-mark"></span>'
+        f'<span class="sort-arrow"></span>'
+        f"</th>"
+        for i, col in enumerate(columns)
+    )
+
+    def filter_cell(i: int, col: str) -> str:
+        if col in col_uniques:
+            opts = "".join(f'<option value="{_esc(v)}">{_esc(v)}</option>' for v in col_uniques[col])
+            return f'<th data-col="{i}"><select data-col="{i}" class="col-filter"><option value="">All</option>{opts}</select></th>'
+        return f'<th data-col="{i}"><input data-col="{i}" class="col-filter" type="text" placeholder="Filter…"></th>'
+
+    filter_row = "".join(filter_cell(i, col) for i, col in enumerate(columns))
+
+    body_rows = []
+    for row in pdf.itertuples(index=False, name=None):
+        cells = [_esc(v) for v in row]
+        search_blob = html_lib.escape(" ".join(str(v).lower() for v in row))
+        tds = "".join(f'<td data-col="{i}" title="{c}">{c}</td>' for i, c in enumerate(cells))
+        body_rows.append(f'<tr data-search="{search_blob}">{tds}</tr>')
+    body_html = "".join(body_rows)
+
+    col_names_json = html_lib.escape(json.dumps(columns), quote=True)
+
+    return f"""\
+<div class="spark-table" id="{table_id}_wrap" data-col-names="{col_names_json}">
+  <div class="spark-toolbar">
+    <span class="spark-title">{_esc(title)}</span>
+    <span class="spark-count" data-role="count">{len(pdf)} rows</span>
+    <input class="global-search" type="text" placeholder="Search all columns…">
+    <button class="clear-btn" type="button">Clear filters</button>
+  </div>
+  <div class="chip-bar" data-role="chips"></div>
+  <div class="spark-scroll">
+    <table>
+      <thead>
+        <tr>{header_cells}</tr>
+        <tr>{filter_row}</tr>
+      </thead>
+      <tbody>{body_html}</tbody>
+    </table>
+  </div>
+  <div class="spark-ctxmenu" data-role="ctxmenu"></div>
+</div>"""
+
+
+def table_to_html_with_style(pdf: pd.DataFrame, title: str, table_id: str,
                    max_height: str = "480px", max_col_width: int = 320) -> str:
     """Renders a DataFrame as a scrollable, filterable, dark-mode-aware HTML table.
 
@@ -655,3 +736,4 @@ connect();
 </body>
 </html>
 """
+
