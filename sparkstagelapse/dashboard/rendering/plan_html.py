@@ -70,7 +70,7 @@ def _tree_lines(plan_text: str) -> list[str]:
             break
     if start is None:
         # No header found (already-trimmed text) — treat it all as tree.
-        return [l for l in lines if l.strip()]
+        return [line for line in lines if line.strip()]
     out = []
     for line in lines[start:]:
         stripped = line.strip()

@@ -1,8 +1,10 @@
 from __future__ import annotations
-import io
-import uuid
 
+import contextlib
+import io
 import json
+import logging
+import uuid
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -10,11 +12,9 @@ import pandas as pd
 from pyspark.sql.dataframe import DataFrame
 from rich.console import Console
 from rich.table import Table
-import contextlib
-import logging
 
 from .dashboard.client import DashboardClient
-from .dashboard.rendering import table_to_html_with_style,plan_to_html_with_style,plan_to_html
+from .dashboard.rendering import plan_to_html, plan_to_html_with_style, table_to_html_with_style
 
 logger=logging.getLogger(__name__)
 
