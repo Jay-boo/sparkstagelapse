@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import subprocess
 import sys
@@ -10,11 +11,10 @@ from datetime import datetime, timezone
 
 import pandas as pd
 import requests
-import logging
 
-
+from .rendering import table_to_html, to_plot_spec
 from .server import DEFAULT_HOST, DEFAULT_PORT, log_file
-from .rendering import table_to_html,to_plot_spec
+
 logger=logging.getLogger(__name__)
 
 _READY_TIMEOUT_S = 5.0
@@ -139,6 +139,6 @@ class DashboardClient:
         try:
             requests.post(f"{self.base_url}/api/tables", json=payload, timeout=2)
             return True
-        except Exception as exc:
-            logger.warning(f"dashboard indisponible, table %r non affichée",title,exc_info=True)
+        except Exception:
+            logger.warning("dashboard indisponible, table %r non affichée",title,exc_info=True)
             return False

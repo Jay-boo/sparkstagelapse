@@ -1,7 +1,7 @@
-from fastapi import APIRouter,Request
-from ..state import DashboardState
-from ..models import CardPayload
+from fastapi import APIRouter, Request
 
+from ..models import CardPayload
+from ..state import DashboardState
 
 router=APIRouter()
 

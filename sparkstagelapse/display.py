@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .dashboard.client import DashboardClient
-from .dashboard.rendering import table_to_html,table_to_html_with_style 
+from .dashboard.rendering import table_to_html_with_style
 
 
 def _is_notebook() -> bool:

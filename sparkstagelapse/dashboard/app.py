@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import os
-from typing import Any
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from .state import DashboardState
-from .routers import pages,ws,tables
 from fastapi.templating import Jinja2Templates
 
+from .routers import pages, tables, ws
+from .state import DashboardState
 
 _DASHBOARD_DIR = Path(__file__).parent
 

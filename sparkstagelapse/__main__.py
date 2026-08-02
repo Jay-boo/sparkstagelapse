@@ -1,9 +1,10 @@
+import logging
 from datetime import datetime
 
-import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
+
 from sparkstagelapse.display import display
-import logging
+
 logger=logging.getLogger(__name__)
 
 data = [

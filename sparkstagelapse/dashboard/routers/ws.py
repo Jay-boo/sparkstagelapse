@@ -1,5 +1,6 @@
 
-from fastapi import APIRouter,WebSocket,WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from ..state import DashboardState
 
 router=APIRouter()

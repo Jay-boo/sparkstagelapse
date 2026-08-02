@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import logging
+
 from .dashboard.client import DashboardClient
 from .display import SparkDisplay, display
-import logging
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
