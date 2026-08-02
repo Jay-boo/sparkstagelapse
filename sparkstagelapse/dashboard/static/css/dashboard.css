@@ -63,3 +63,63 @@ main { padding: 20px 24px 60px; max-width: 1400px; margin: 0 auto; }
   padding: 1px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
 }
 .table-card .card-time { cursor: default; }
+
+/* Spark physical-plan tree (see rendering/plan_html.py) */
+.spark-plan {
+  margin-top: 10px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); overflow: hidden;
+}
+.plan-toolbar {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: var(--bg-alt); border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+}
+.plan-title { font-weight: 600; color: var(--text); }
+.plan-warn {
+  color: var(--warn); font-size: 11px; background: rgba(217, 119, 6, 0.14);
+  border-radius: 8px; padding: 2px 8px;
+}
+.plan-toggle {
+  margin-left: auto; color: var(--accent); cursor: pointer; font-size: 11px;
+  user-select: none;
+}
+.plan-toggle:hover { text-decoration: underline; }
+.plan-tree {
+  padding: 10px 12px; max-height: 360px; overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.plan-node {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 2px 0 2px calc(var(--depth) * 16px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.plan-guide {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--text-muted);
+}
+.plan-op { font-weight: 600; color: var(--text); flex: none; }
+.plan-detail {
+  color: var(--text-muted); overflow: hidden; text-overflow: ellipsis;
+}
+.plan-raw {
+  margin: 0; padding: 10px 12px; max-height: 360px; overflow: auto;
+  font-size: 11.5px; white-space: pre; background: var(--bg-alt);
+}
+
+/* operator category colors — shuffles (Exchange) get the warn color since
+   they're usually the most expensive/interesting nodes to spot at a glance */
+.cat-exchange .plan-guide, .cat-exchange .plan-op { color: var(--warn); }
+.cat-exchange .plan-guide { background: var(--warn); }
+.cat-join .plan-guide, .cat-join .plan-op { color: #a855f7; }
+.cat-join .plan-guide { background: #a855f7; }
+.cat-aggregate .plan-guide, .cat-aggregate .plan-op { color: #14b8a6; }
+.cat-aggregate .plan-guide { background: #14b8a6; }
+.cat-scan .plan-guide, .cat-scan .plan-op { color: var(--accent); }
+.cat-scan .plan-guide { background: var(--accent); }
+.cat-sort .plan-guide, .cat-sort .plan-op { color: #eab308; }
+.cat-sort .plan-guide { background: #eab308; }
+.cat-filter .plan-guide, .cat-filter .plan-op,
+.cat-project .plan-guide, .cat-project .plan-op { color: var(--ok); }
+.cat-filter .plan-guide, .cat-project .plan-guide { background: var(--ok); }
+.cat-adaptive .plan-guide, .cat-adaptive .plan-op { color: var(--text-muted); }

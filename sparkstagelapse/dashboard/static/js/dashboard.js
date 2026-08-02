@@ -46,6 +46,22 @@ function renderPlot(sparkTableEl, plotSpec) {
   Plotly.newPlot(plotDiv, plotSpec.data || [], layout, { responsive: true, displaylogo: false });
 }
 
+// Wires the "show raw" / "show tree" toggle on a .spark-plan block
+// (see rendering/plan_html.py for the markup it expects).
+function wirePlanToggle(planEl) {
+  if (!planEl) return;
+  const toggle = planEl.querySelector('[data-role="plan-toggle"]');
+  const tree = planEl.querySelector('[data-role="plan-tree"]');
+  const raw = planEl.querySelector('[data-role="plan-raw"]');
+  if (!toggle || !tree || !raw) return;
+  toggle.addEventListener("click", () => {
+    const showingRaw = !raw.hidden;
+    raw.hidden = showingRaw;
+    tree.hidden = !showingRaw;
+    toggle.textContent = showingRaw ? "show raw" : "show tree";
+  });
+}
+
 function addCard(payload) {
   if (document.getElementById("card_" + payload.id)) return;
   emptyState.style.display = "none";
@@ -75,6 +91,11 @@ function addCard(payload) {
 
   if (payload.plot) {
     renderPlot(sparkTableEl, payload.plot);
+  }
+
+  if (payload.plan_html) {
+    card.insertAdjacentHTML("beforeend", payload.plan_html);
+    wirePlanToggle(card.querySelector(".spark-plan"));
   }
 
   clearLatestPills();

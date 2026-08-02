@@ -23,8 +23,8 @@ tui = ["textual>=0.40"]
 dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.5", "build>=1.0", "twine>=5.0", "httpx>=0.24"]
 
 [project.urls]
-Homepage = "https://github.com/OWNER/sparkstagelapse"
-Repository = "https://github.com/OWNER/sparkstagelapse"
+Homepage = "https://github.com/Jay-boo/sparkstagelapse"
+Repository = "https://github.com/Jay-boo/sparkstagelapse"
 
 [tool.hatch.build.targets.wheel]
 packages = ["sparkstagelapse"]

@@ -18,5 +18,4 @@ async def ws_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     finally:
-        if websocket in state["connections"]:
-            state["connections"].remove(websocket)
+        state.remove_connection(websocket)

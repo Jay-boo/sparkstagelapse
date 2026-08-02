@@ -10,7 +10,10 @@ class CardPayload(BaseModel):
     — no inline <style>/<script>, those live in static/. `plot` is a Plotly
     figure spec (`{"data": [...], "layout": {...}}`, i.e. what
     `plotly.graph_objects.Figure.to_plotly_json()` returns) rendered
-    client-side with Plotly.js; omit it for table-only cards.
+    client-side with Plotly.js; omit it for table-only cards. `plan_html`
+    is pre-rendered markup for the Spark physical-plan tree (see
+    rendering/plan_html.py) — same deal as `table_html`, no inline
+    <style>/<script>; omit it for cards with no captured plan.
     """
 
     id: str
@@ -19,3 +22,4 @@ class CardPayload(BaseModel):
     table_html: str
     columns: list[str]
     plot: Optional[dict[str, Any]] = None
+    plan_html: Optional[str] = None

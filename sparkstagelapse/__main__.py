@@ -67,11 +67,19 @@ data = [
 ]
 
 if __name__=="__main__":
+    import pyspark.sql.functions as F
+    logger.setLevel(logging.DEBUG)
     logger.info('Running basic spark command')
     spark = SparkSession.builder.appName("sparkstagelapse-demo").getOrCreate()
     df = spark.createDataFrame(data)
-    display(df,title="Raw data",mode="web")
-    # display(df.select(F.col("tags")),title="After Selection")
+    display(df,title="Raw data",plan=False)
+    df=(
+        df
+        .groupBy("name")
+        .agg(F.sum("orders_count").alias("total_orders_count"))
+    )
+    display(df,title="Processed data")
+
     logger.info('DONE')
 
 

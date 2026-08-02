@@ -1,4 +1,6 @@
 from __future__ import annotations
+import io
+import uuid
 
 import json
 from dataclasses import dataclass, field
@@ -8,10 +10,13 @@ import pandas as pd
 from pyspark.sql.dataframe import DataFrame
 from rich.console import Console
 from rich.table import Table
+import contextlib
+import logging
 
 from .dashboard.client import DashboardClient
-from .dashboard.rendering import table_to_html_with_style
+from .dashboard.rendering import table_to_html_with_style,plan_to_html_with_style,plan_to_html
 
+logger=logging.getLogger(__name__)
 
 def _is_notebook() -> bool:
     try:
@@ -28,6 +33,19 @@ def _safe_str(value):
         return json.dumps(value, ensure_ascii=False, default=str)
     return str(value)
 
+def _capture_explain(df:DataFrame,mode:str="simple")->str:
+    """
+    """
+    if not hasattr(df,"explain"):
+        return None
+    buf= io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            df.explain(mode=mode)
+        return buf.getvalue()
+    except Exception:
+        logger.warning("failed to capture spark plan",exc_info=True)
+        return None
 
 _default_client = DashboardClient()
 
@@ -37,12 +55,16 @@ class SparkDisplay:
     pdf: pd.DataFrame
     title: str = "Spark preview"
     console: Optional[Console] = None
+    plan_text:Optional[str]=None
     _dashboard: DashboardClient = field(default_factory=lambda: _default_client)
 
     def _repr_html_(self):
-        import uuid
         table_id = f"tbl_{uuid.uuid4().hex[:8]}"
-        return table_to_html_with_style(self.pdf, self.title, table_id)
+        html=table_to_html_with_style(self.pdf, self.title, table_id)
+        if self.plan_text:
+            plan_id = f"plan_{uuid.uuid4().hex[:8]}"
+            html+= plan_to_html_with_style(self.plan_text,self.title,plan_id)
+        return html
 
     def __str__(self):
         return self.pdf.to_string(index=False)
@@ -68,7 +90,11 @@ class SparkDisplay:
     def show_web(self):
         """Pousse la table vers le dashboard web local (persistant, process
         séparé). Non bloquant : retourne immédiatement, le script continue."""
-        self._dashboard.push(self.pdf, self.title)
+        plan_html=None
+        if self.plan_text:
+            plan_id = f"plan_{uuid.uuid4().hex[:8]}"
+            plan_html = plan_to_html(self.plan_text, self.title, plan_id)
+        self._dashboard.push(self.pdf, self.title, plan_html=plan_html)
         return self
 
     def show_tui(self):
@@ -167,7 +193,7 @@ class SparkDisplay:
 
 
 def display(df:DataFrame, n: int = 200, title: str = "Spark DataFrame",
-                   console: Optional[Console] = None, mode: str = "auto",truncate:bool|None=True):
+                   console: Optional[Console] = None, mode: str = "auto",truncate:bool|None=True,plan:bool=False,plan_mode:str="simple"):
     """
     mode:
       - "auto"     : notebook -> displays immediately (like Databricks' display()),
@@ -180,10 +206,15 @@ def display(df:DataFrame, n: int = 200, title: str = "Spark DataFrame",
       - "tui"      : full-screen Textual explorer, blocking
       - "rich"     : plain ASCII output in the terminal
     """
+    plan_text=None
+    if mode=="auto" and not _is_notebook():
+        plan=True
+    if plan:
+        plan_text=_capture_explain(df,mode=plan_mode)
     pdf = df.limit(n).toPandas()
     if hasattr(df, "show") and not _is_notebook():
         df.show(n, truncate=truncate) 
-    obj = SparkDisplay(pdf=pdf, title=title, console=console)
+    obj = SparkDisplay(pdf=pdf, title=title, console=console,plan_text=plan_text)
 
     if mode == "auto":
         if _is_notebook():

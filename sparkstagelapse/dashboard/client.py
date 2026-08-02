@@ -114,7 +114,7 @@ class DashboardClient:
             time.sleep(_POLL_INTERVAL_S)
         return False
 
-    def push(self, pdf: pd.DataFrame, title: str,plot=None) -> bool:
+    def push(self, pdf: pd.DataFrame, title: str, plot=None, plan_html: str|None=None) -> bool:
         if not self.ensure_running():
             logger.warning(
                 "impossible de démarrer/joindre le dahsboard sur %s - voir %s",
@@ -135,6 +135,7 @@ class DashboardClient:
             "table_html": table_to_html(pdf, title, table_id),
             "columns": [str(c) for c in pdf.columns],
             "plot": to_plot_spec(plot),
+            "plan_html": plan_html
         }
         try:
             requests.post(f"{self.base_url}/api/tables", json=payload, timeout=2)
