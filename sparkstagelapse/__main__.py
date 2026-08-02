@@ -2,12 +2,14 @@ import logging
 from datetime import datetime
 
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
 from sparkstagelapse.display import display
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-data = [
+# --- Users data (same as your example) ---
+users_data = [
     {
         "user_id": 1001,
         "name": "Alice Martin",
@@ -66,20 +68,93 @@ data = [
     },
 ]
 
-if __name__=="__main__":
-    import pyspark.sql.functions as F
+# --- Orders data (to join with users) ---
+orders_data = [
+    {"order_id": 1, "user_id": 1001, "amount": 120.50, "status": "completed"},
+    {"order_id": 2, "user_id": 1001, "amount": 55.00, "status": "completed"},
+    {"order_id": 3, "user_id": 1002, "amount": 19.99, "status": "refunded"},
+    {"order_id": 4, "user_id": 1003, "amount": 890.00, "status": "completed"},
+    {"order_id": 5, "user_id": 1003, "amount": 1200.00, "status": "completed"},
+    {"order_id": 6, "user_id": 1005, "amount": 300.00, "status": "pending"},  # no matching user
+]
+
+if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
-    logger.info('Running basic spark command')
-    spark = SparkSession.builder.appName("sparkstagelapse-demo").getOrCreate()
-    df = spark.createDataFrame(data)
-    display(df,title="Raw data",plan=False)
-    df=(
-        df
-        .groupBy("name")
-        .agg(F.sum("orders_count").alias("total_orders_count"))
+    logger.info("Running Spark join example")
+
+    spark = (
+        SparkSession.builder
+        .appName("sparkstagelapse-join-demo")
+        .getOrCreate()
     )
-    display(df,title="Processed data")
 
-    logger.info('DONE')
+    # Create DataFrames
+    users_df = spark.createDataFrame(users_data)
+    orders_df = spark.createDataFrame(orders_data)
 
+    display(users_df, title="Users (raw)", plan=False)
+    display(orders_df, title="Orders (raw)", plan=False)
 
+    # Inner join: only users with at least one order
+    users_orders_inner = (
+        users_df
+        .alias("u")
+        .join(
+            orders_df.alias("o"),
+            on="user_id",
+            how="inner",
+        )
+        .select(
+            F.col("u.user_id"),
+            F.col("u.name"),
+            F.col("u.country"),
+            F.col("o.order_id"),
+            F.col("o.amount"),
+            F.col("o.status"),
+        )
+    )
+
+    display(users_orders_inner, title="Users ⨝ Orders (inner join)", plan=False)
+
+    # Left join: all users, with order info where available
+    users_orders_left = (
+        users_df
+        .alias("u")
+        .join(
+            orders_df.alias("o"),
+            on="user_id",
+            how="left",
+        )
+        .select(
+            F.col("u.user_id"),
+            F.col("u.name"),
+            F.col("u.country"),
+            F.col("o.order_id"),
+            F.col("o.amount"),
+            F.col("o.status"),
+        )
+    )
+
+    display(users_orders_left, title="Users ⨝ Orders (left join)", plan=False)
+
+    # Aggregation after join: total order amount per user
+    user_order_agg = (
+        users_df
+        .alias("u")
+        .join(
+            orders_df.alias("o"),
+            on="user_id",
+            how="left",
+        )
+        .groupBy("u.user_id", "u.name", "u.country")
+        .agg(
+            F.count("o.order_id").alias("num_orders"),
+            F.sum("o.amount").alias("total_order_amount"),
+            F.avg("o.amount").alias("avg_order_amount"),
+        )
+        .orderBy("u.user_id")
+    )
+
+    display(user_order_agg, title="User order aggregates (after join)", plan=False)
+
+    logger.info("DONE")

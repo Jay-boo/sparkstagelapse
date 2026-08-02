@@ -46,21 +46,62 @@ function renderPlot(sparkTableEl, plotSpec) {
   Plotly.newPlot(plotDiv, plotSpec.data || [], layout, { responsive: true, displaylogo: false });
 }
 
-// Wires the "show raw" / "show tree" toggle on a .spark-plan block
+// Wires the tree / dag / raw view switcher on a .spark-plan block
 // (see rendering/plan_html.py for the markup it expects).
 function wirePlanToggle(planEl) {
   if (!planEl) return;
-  const toggle = planEl.querySelector('[data-role="plan-toggle"]');
-  const tree = planEl.querySelector('[data-role="plan-tree"]');
-  const raw = planEl.querySelector('[data-role="plan-raw"]');
-  if (!toggle || !tree || !raw) return;
-  toggle.addEventListener("click", () => {
-    const showingRaw = !raw.hidden;
-    raw.hidden = showingRaw;
-    tree.hidden = !showingRaw;
-    toggle.textContent = showingRaw ? "show raw" : "show tree";
+  const buttons = planEl.querySelectorAll('[data-role="plan-viewsw"] .plan-view-btn');
+  if (!buttons.length) return;
+  const views = {
+    tree: planEl.querySelector('[data-role="plan-tree"]'),
+    dag: planEl.querySelector('[data-role="plan-dag-scroll"]'),
+    raw: planEl.querySelector('[data-role="plan-raw"]'),
+  };
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      buttons.forEach((b) => b.classList.toggle("active", b === btn));
+      Object.entries(views).forEach(([name, el]) => {
+        if (el) el.hidden = name !== btn.dataset.view;
+      });
+    });
   });
 }
+
+// Wires click-and-drag panning on the DAG's scroll container, so people
+// can grab the canvas directly instead of hunting for scrollbars. Uses
+// Pointer Events so mouse, touch, and pen all work through one path;
+// panning is just scrollLeft/scrollTop math, so it composes fine with the
+// container's native overflow:auto (still scrollable with a wheel/trackpad
+// or scrollbar when not actively dragging).
+function wireDagPan(scrollEl) {
+  if (!scrollEl) return;
+  let dragging = false;
+  let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+  scrollEl.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return; // left-click / primary touch only
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = scrollEl.scrollLeft;
+    startTop = scrollEl.scrollTop;
+    scrollEl.classList.add("dragging");
+    scrollEl.setPointerCapture(e.pointerId);
+  });
+  scrollEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    scrollEl.scrollLeft = startLeft - (e.clientX - startX);
+    scrollEl.scrollTop = startTop - (e.clientY - startY);
+  });
+  const stopDrag = () => {
+    dragging = false;
+    scrollEl.classList.remove("dragging");
+  };
+  scrollEl.addEventListener("pointerup", stopDrag);
+  scrollEl.addEventListener("pointercancel", stopDrag);
+  scrollEl.addEventListener("pointerleave", stopDrag);
+}
+
 
 function addCard(payload) {
   if (document.getElementById("card_" + payload.id)) return;
@@ -95,7 +136,9 @@ function addCard(payload) {
 
   if (payload.plan_html) {
     card.insertAdjacentHTML("beforeend", payload.plan_html);
-    wirePlanToggle(card.querySelector(".spark-plan"));
+    const planEl = card.querySelector(".spark-plan");
+    wirePlanToggle(planEl);
+    wireDagPan(planEl.querySelector('[data-role="plan-dag-scroll"]'));
   }
 
   clearLatestPills();
