@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from sparkstagelapse.dashboard.templates import table_to_html
+from sparkstagelapse.dashboard.rendering import table_to_html
 
 
 def test_table_to_html_escapes_title():
