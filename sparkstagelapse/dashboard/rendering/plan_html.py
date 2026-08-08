@@ -3,6 +3,8 @@ from __future__ import annotations
 import html as html_lib
 import re
 
+from .plan_advisor import analyze_plan
+
 # Spark's tree-string renderer (TreeNode.generateTreeString) builds each
 # line's prefix out of 3-char chunks: "   " / ":  " to continue an
 # ancestor branch, and "+- " / ":- " as the marker immediately before a
@@ -56,6 +58,19 @@ def _render_rows(nodes: list[dict]) -> tuple[str, int]:
             f'</div>'
         )
     return "".join(rows), n_exchanges
+
+
+def _render_suggestions(suggestions: list[dict]) -> str:
+    if not suggestions:
+        return ""
+    items = "".join(
+        f'<div class="plan-suggestion level-{s["level"]}">'
+        f'<span class="plan-suggestion-dot"></span>'
+        f'<span class="plan-suggestion-text">{html_lib.escape(s["message"])}</span>'
+        f'</div>'
+        for s in suggestions
+    )
+    return f'<div class="plan-suggestions" data-role="plan-suggestions">{items}</div>'
 
 
 def _tree_lines(plan_text: str) -> list[str]:
@@ -269,6 +284,7 @@ def plan_to_html(plan_text: str, title: str, plan_id: str) -> str:
 
     rows_html, n_exchanges = _render_rows(nodes)
     dag_html = _dag_to_html(nodes, plan_id)
+    suggestions_html = _render_suggestions(analyze_plan(nodes))
 
     warn_html = ""
     if n_exchanges:
@@ -282,6 +298,7 @@ def plan_to_html(plan_text: str, title: str, plan_id: str) -> str:
     {warn_html}
     {_view_switcher()}
   </div>
+  {suggestions_html}
   <div class="plan-tree" data-role="plan-tree">{rows_html}</div>
   <div class="plan-dag-scroll" data-role="plan-dag-scroll" hidden>{dag_html}</div>
   <pre class="plan-raw" data-role="plan-raw" hidden>{html_lib.escape(plan_text)}</pre>
@@ -341,6 +358,19 @@ def plan_to_html_with_style(plan_text: str, title: str, plan_id: str,
     }}
     #{plan_id}_wrap .plan-view-btn:hover {{ color: var(--text); }}
     #{plan_id}_wrap .plan-view-btn.active {{ background: var(--accent); color: #fff; }}
+    #{plan_id}_wrap .plan-suggestions {{
+      padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg);
+      display: flex; flex-direction: column; gap: 6px;
+    }}
+    #{plan_id}_wrap .plan-suggestion {{
+      display: flex; align-items: flex-start; gap: 8px; font-size: 11.5px; line-height: 1.4;
+    }}
+    #{plan_id}_wrap .plan-suggestion-dot {{
+      width: 7px; height: 7px; border-radius: 50%; flex: none; margin-top: 4px;
+      background: var(--accent);
+    }}
+    #{plan_id}_wrap .plan-suggestion.level-warn .plan-suggestion-dot {{ background: var(--warn); }}
+    #{plan_id}_wrap .plan-suggestion-text {{ color: var(--text); }}
     #{plan_id}_wrap .plan-tree {{
       padding: 10px 12px; max-height: {max_height}; overflow: auto;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
@@ -441,6 +471,7 @@ def plan_to_html_with_style(plan_text: str, title: str, plan_id: str,
 
     rows_html, n_exchanges = _render_rows(nodes)
     dag_html = _dag_to_html(nodes, plan_id)
+    suggestions_html = _render_suggestions(analyze_plan(nodes))
 
     warn_html = ""
     if n_exchanges:
@@ -500,6 +531,7 @@ def plan_to_html_with_style(plan_text: str, title: str, plan_id: str,
     {warn_html}
     {_view_switcher()}
   </div>
+  {suggestions_html}
   <div class="plan-tree" data-role="plan-tree">{rows_html}</div>
   <div class="plan-dag-scroll" data-role="plan-dag-scroll" hidden>{dag_html}</div>
   <pre class="plan-raw" data-role="plan-raw" hidden>{html_lib.escape(plan_text)}</pre>
