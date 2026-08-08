@@ -71,6 +71,7 @@ def table_to_html(pdf: pd.DataFrame, title: str, table_id: str) -> str:
     <span class="spark-title">{_esc(title)}</span>
     <span class="spark-count" data-role="count">{len(pdf)} rows</span>
     <input class="global-search" type="text" placeholder="Search all columns…">
+    <input class="col-search" type="text" placeholder="Search column…">
     <button class="clear-btn" type="button">Clear filters</button>
   </div>
   <div class="chip-bar" data-role="chips"></div>
@@ -180,6 +181,10 @@ def table_to_html_with_style(pdf: pd.DataFrame, title: str, table_id: str,
       flex: 1; min-width: 180px; padding: 5px 8px; border: 1px solid var(--border);
       border-radius: 5px; font-size: 12px; background: var(--input-bg); color: var(--text);
     }}
+    #{table_id}_wrap input.col-search {{
+      min-width: 140px; padding: 5px 8px; border: 1px solid var(--border);
+      border-radius: 5px; font-size: 12px; background: var(--input-bg); color: var(--text);
+    }}
     #{table_id}_wrap button.clear-btn {{
       padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
       background: var(--bg-alt); color: var(--text); cursor: pointer; font-size: 12px;
@@ -221,6 +226,7 @@ def table_to_html_with_style(pdf: pd.DataFrame, title: str, table_id: str,
     }}
     #{table_id}_wrap tbody tr:hover td {{ background: var(--hover); }}
     #{table_id}_wrap tbody tr.row-hidden {{ display: none; }}
+    #{table_id}_wrap .col-hidden {{ display: none; }}
     #{table_id}_wrap tbody td {{ cursor: context-menu; }}
     #{table_id}_wrap .sort-arrow {{ font-size: 10px; margin-left: 4px; color: var(--accent); }}
     #{table_id}_wrap th.pinned-col, #{table_id}_wrap td.pinned-col {{
@@ -247,6 +253,8 @@ def table_to_html_with_style(pdf: pd.DataFrame, title: str, table_id: str,
     <span class="spark-count" id="{table_id}_count">{n_rows} rows</span>
     <input class="global-search" id="{table_id}_search" type="text"
            placeholder="Search all columns…" oninput="applyFilters_{table_id}()">
+    <input class="col-search" id="{table_id}_colsearch" type="text"
+           placeholder="Search column…" oninput="applyColSearch_{table_id}()">
     <button class="clear-btn" onclick="clearFilters_{table_id}()">Clear filters</button>
   </div>
 
@@ -410,10 +418,23 @@ def table_to_html_with_style(pdf: pd.DataFrame, title: str, table_id: str,
 
   window["clearFilters_" + tableId] = function() {{
     document.getElementById(tableId + "_search").value = "";
+    document.getElementById(tableId + "_colsearch").value = "";
     wrap.querySelectorAll(".col-filter").forEach(el => el.value = "");
     exactFilters = [];
     renderChips();
     window["applyFilters_" + tableId]();
+    window["applyColSearch_" + tableId]();
+  }};
+
+  window["applyColSearch_" + tableId] = function() {{
+    const q = (document.getElementById(tableId + "_colsearch").value || "").toLowerCase().trim();
+    for (let i = 0; i < numCols; i++) {{
+      const match = !q || colNames[i].toLowerCase().includes(q);
+      wrap.querySelectorAll('[data-col="' + i + '"]').forEach(el => {{
+        el.classList.toggle("col-hidden", !match);
+      }});
+    }}
+    relayoutStickyOffsets();
   }};
 
   window["sortCol_" + tableId] = function(colIdx) {{

@@ -21,6 +21,10 @@
   flex: 1; min-width: 180px; padding: 5px 8px; border: 1px solid var(--border);
   border-radius: 5px; font-size: 12px; background: var(--input-bg); color: var(--text);
 }
+.spark-table input.col-search {
+  min-width: 140px; padding: 5px 8px; border: 1px solid var(--border);
+  border-radius: 5px; font-size: 12px; background: var(--input-bg); color: var(--text);
+}
 .spark-table button.clear-btn {
   padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
   background: var(--bg-alt); color: var(--text); cursor: pointer; font-size: 12px;
@@ -62,6 +66,7 @@
 }
 .spark-table tbody tr:hover td { background: var(--hover); }
 .spark-table tbody tr.row-hidden { display: none; }
+.spark-table .col-hidden { display: none; }
 .spark-table tbody td { cursor: context-menu; }
 .spark-table .sort-arrow { font-size: 10px; margin-left: 4px; color: var(--accent); }
 .spark-table th.pinned-col, .spark-table td.pinned-col {

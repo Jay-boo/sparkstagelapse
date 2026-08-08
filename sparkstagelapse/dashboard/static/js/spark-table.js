@@ -40,6 +40,7 @@ class SparkTable {
       input.addEventListener("change", () => this.applyFilters());
     });
     this.el.querySelector(".global-search").addEventListener("input", () => this.applyFilters());
+    this.el.querySelector(".col-search").addEventListener("input", () => this.applyColSearch());
     this.el.querySelector(".clear-btn").addEventListener("click", () => this.clearFilters());
 
     this.tbody.addEventListener("contextmenu", (ev) => this._onCellContextMenu(ev));
@@ -173,10 +174,23 @@ class SparkTable {
 
   clearFilters() {
     this.el.querySelector(".global-search").value = "";
+    this.el.querySelector(".col-search").value = "";
     this.el.querySelectorAll(".col-filter").forEach((el) => (el.value = ""));
     this.exactFilters = [];
     this._renderChips();
     this.applyFilters();
+    this.applyColSearch();
+  }
+
+  applyColSearch() {
+    const q = (this.el.querySelector(".col-search").value || "").toLowerCase().trim();
+    for (let i = 0; i < this.numCols; i++) {
+      const match = !q || this.colNames[i].toLowerCase().includes(q);
+      this.el.querySelectorAll(`[data-col="${i}"]`).forEach((el) => {
+        el.classList.toggle("col-hidden", !match);
+      });
+    }
+    this._relayoutStickyOffsets();
   }
 
   sortCol(colIdx) {
